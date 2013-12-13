@@ -127,3 +127,6 @@ func TestGetPaste(t *testing.T) {
 	}
 }
 
+func TestDeletePaste(t *testing.T) {
+	// TODO: Implement.
+}

@@ -6,10 +6,11 @@ import (
 	"net/http"
 	"encoding/json"
 	"io/ioutil"
+	"net/url"
 )
 
 // Default URL for refheap. This is the official site.
-const RefheapURL = "https://refheap.com/api"
+const RefheapURL = "https://www.refheap.com/api"
 
 // There is a bit of configuration in this client, and this holds it.
 // Fields:
@@ -96,12 +97,17 @@ func (e RefheapError) Error() string {
 	return e.ErrorMessage
 }
 
+func readBody(resp *http.Response) (body []byte, err error) {
+	defer resp.Body.Close()
+	body, err = ioutil.ReadAll(resp.Body)
+	return
+}
+
 // The body parsing code will always be the same. parseBody handles
 // the JSON parsing and error handling (including handling
 // RefheapError).
 func parseBody(resp *http.Response, to interface{}) (err error) {
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := readBody(resp)
 	if err != nil {
 		return
 	}
@@ -111,10 +117,19 @@ func parseBody(resp *http.Response, to interface{}) (err error) {
 	}
 	if newErr.ErrorMessage != "" {
 		err = newErr
-	} else {
+	} else if to != nil {
 		err = json.Unmarshal(body, to)
 	}
 	return
+}
+
+// If we are properly comfigured for authentication, this function
+// will apply it to our data.
+func addAuth(data *url.Values, config *Config) {
+	if user := config.User; user != "" {
+		data.Add("username", user)
+		data.Add("token", config.Key)
+	}
 }
 
 // Get a Paste from refheap. Result will be a Paste or an error
@@ -127,3 +142,15 @@ func GetPaste(config *Config, id string) (paste Paste, err error) {
 	return
 }
 
+// Delete a paste. Requires you to have configured authentication.
+func DeletePaste(config *Config, id string) (err error) {
+	data := &url.Values{}
+	addAuth(data, config)
+	finalUrl := fmt.Sprintf("%v/paste/%v?%v", config.Url, id, data.Encode())
+	request, _ := http.NewRequest("DELETE", finalUrl, nil)
+	resp, err := http.DefaultClient.Do(request)
+	if resp.StatusCode != 204 {
+		err = parseBody(resp, nil)
+	}
+	return
+}
