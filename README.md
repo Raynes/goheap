@@ -5,6 +5,8 @@ refheap's entire API and has a full test suite.
 
 ## Usage
 
+You can find the godocs [here](http://godoc.org/github.com/Raynes/goheap).
+
 This library is meant to be pretty easy to use. Let's go over the API!
 
 ### Config
