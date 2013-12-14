@@ -72,8 +72,6 @@ func gpError(t *testing.T, missing string, missingValue interface{}, expected in
 	t.Errorf(err, expression, missing, missingValue, expected)
 }
 
-// TODO: Allow for test configuration for calls like this with
-// environment variables to set refheap url, user, pass, etc.
 func TestGet(t *testing.T) {
 	// Set what the current expression is for error messages.
 	expression = "paste.Get(&config)"
