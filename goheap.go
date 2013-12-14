@@ -201,3 +201,17 @@ func (paste *Paste) Fork(config *Config) (err error) {
 func (paste *Paste) Save(config *Config) (err error) {
 	return paste.createOrSave(config.URL+"/paste/"+paste.ID, config)
 }
+
+type highlightedPaste struct {
+	Content string
+}
+
+// Get the highlighted version of a paste.
+func (paste *Paste) GetHighlighted(config *Config) (s highlightedPaste, err error) {
+	resp, err := http.Get(config.URL + "/paste/" + paste.ID + "/highlight")
+	if err != nil {
+		return
+	}
+	err = parseBody(resp, &s)
+	return
+}

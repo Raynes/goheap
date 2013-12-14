@@ -2,6 +2,7 @@ package goheap
 
 import (
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -214,5 +215,25 @@ func TestSave(t *testing.T) {
 
 	if contents := newPaste.Contents; contents != "hi there" {
 		t.Errorf("Expected %#v but got %#v.", newContents, contents)
+	}
+}
+
+func TestGetHighlighted(t *testing.T) {
+	config := devConfig()
+	paste := Paste{Private: true, Contents: "hi"}
+
+	if err := paste.Create(&config); err != nil {
+		t.Errorf("Something went wrong saving a paste: %v", err)
+	}
+
+	defer paste.Delete(&config)
+
+	highlighted, err := paste.GetHighlighted(&config)
+	if err != nil {
+		return
+	}
+
+	if !strings.HasPrefix(highlighted.Content, "<table") {
+		t.Errorf("Expected string to begin with '<table'. Got: %#v", highlighted.Content)
 	}
 }
