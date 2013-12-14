@@ -172,5 +172,19 @@ func TestCreatePaste(t *testing.T) {
 }
 
 func TestDeletePaste(t *testing.T) {
-	// TODO: Implement.
+	config := devConfig()
+	expression = "paste.DeletePaste(&config)"
+	paste := Paste{Contents: "foo", Private: true}
+	if err := paste.CreatePaste(&config); err != nil {
+		t.Errorf("Something went wrong creating a paste: %v", err)
+	}
+
+	if err := paste.DeletePaste(&config); err != nil {
+		t.Errorf("Something went wrong deleting a paste: %v", err)
+	}
+
+	err := paste.GetPaste(&config)
+	if _, ok := err.(RefheapError); !ok {
+		t.Errorf("Paste %v still exists after trying to delete!", paste.ID)
+	}
 }
