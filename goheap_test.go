@@ -58,6 +58,46 @@ func TestNewConfig(t *testing.T) {
 	}
 }
 
+func TestCreate(t *testing.T) {
+	config := devConfig()
+	paste := Paste{Private: true, Contents: "hi", Language: "Go"}
+	err := paste.Create(&config)
+	if err != nil {
+		t.Errorf("Error creating paste: %v", err)
+	}
+
+	defer paste.Delete(&config)
+
+	if pUser, cUser := paste.User, config.User; pUser != cUser {
+		t.Errorf("Expected creating user to be %v. It was %v.", cUser, pUser)
+	}
+
+	if lang := paste.Language; lang != "Go" {
+		t.Errorf("Expected language to be Go. It was %v.", lang)
+	}
+
+	if priv := paste.Private; !priv {
+		t.Error("Expected paste to be private!")
+	}
+}
+
+func TestDelete(t *testing.T) {
+	config := devConfig()
+	paste := Paste{Contents: "foo", Private: true}
+	if err := paste.Create(&config); err != nil {
+		t.Errorf("Something went wrong creating a paste: %v", err)
+	}
+
+	if err := paste.Delete(&config); err != nil {
+		t.Errorf("Something went wrong deleting a paste: %v", err)
+	}
+
+	err := paste.Get(&config)
+	if _, ok := err.(RefheapError); !ok {
+		t.Errorf("Paste %v still exists after trying to delete!", paste.ID)
+	}
+}
+
 func gpError(t *testing.T, missing string, missingValue interface{}, expected interface{}) {
 	err := `
 		Paste field %v was not as expected.
@@ -123,43 +163,23 @@ func TestGet(t *testing.T) {
 	}
 }
 
-func TestCreate(t *testing.T) {
+func TestGetHighlighted(t *testing.T) {
 	config := devConfig()
-	paste := Paste{Private: true, Contents: "hi", Language: "Go"}
-	err := paste.Create(&config)
-	if err != nil {
-		t.Errorf("Error creating paste: %v", err)
+	paste := Paste{Private: true, Contents: "hi"}
+
+	if err := paste.Create(&config); err != nil {
+		t.Errorf("Something went wrong saving a paste: %v", err)
 	}
 
 	defer paste.Delete(&config)
 
-	if pUser, cUser := paste.User, config.User; pUser != cUser {
-		t.Errorf("Expected creating user to be %v. It was %v.", cUser, pUser)
+	highlighted, err := paste.GetHighlighted(&config)
+	if err != nil {
+		return
 	}
 
-	if lang := paste.Language; lang != "Go" {
-		t.Errorf("Expected language to be Go. It was %v.", lang)
-	}
-
-	if priv := paste.Private; !priv {
-		t.Error("Expected paste to be private!")
-	}
-}
-
-func TestDelete(t *testing.T) {
-	config := devConfig()
-	paste := Paste{Contents: "foo", Private: true}
-	if err := paste.Create(&config); err != nil {
-		t.Errorf("Something went wrong creating a paste: %v", err)
-	}
-
-	if err := paste.Delete(&config); err != nil {
-		t.Errorf("Something went wrong deleting a paste: %v", err)
-	}
-
-	err := paste.Get(&config)
-	if _, ok := err.(RefheapError); !ok {
-		t.Errorf("Paste %v still exists after trying to delete!", paste.ID)
+	if !strings.HasPrefix(highlighted.Content, "<table") {
+		t.Errorf("Expected string to begin with '<table'. Got: %#v", highlighted.Content)
 	}
 }
 
@@ -215,25 +235,5 @@ func TestSave(t *testing.T) {
 
 	if contents := newPaste.Contents; contents != "hi there" {
 		t.Errorf("Expected %#v but got %#v.", newContents, contents)
-	}
-}
-
-func TestGetHighlighted(t *testing.T) {
-	config := devConfig()
-	paste := Paste{Private: true, Contents: "hi"}
-
-	if err := paste.Create(&config); err != nil {
-		t.Errorf("Something went wrong saving a paste: %v", err)
-	}
-
-	defer paste.Delete(&config)
-
-	highlighted, err := paste.GetHighlighted(&config)
-	if err != nil {
-		return
-	}
-
-	if !strings.HasPrefix(highlighted.Content, "<table") {
-		t.Errorf("Expected string to begin with '<table'. Got: %#v", highlighted.Content)
 	}
 }
