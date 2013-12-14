@@ -161,3 +161,32 @@ func TestDelete(t *testing.T) {
 		t.Errorf("Paste %v still exists after trying to delete!", paste.ID)
 	}
 }
+
+func TestFork(t *testing.T) {
+	config := devConfig()
+	anonConfig, _ := NewConfig(config.URL)
+
+	testPaste := Paste{Private: true, Contents: "hi"}
+
+	// We can't delete this one because it is anonymous, and we
+	// can't fork pastes that we own. It was either this or make
+	// tests require two different refheap user configs.
+	if err := testPaste.Create(&anonConfig); err != nil {
+		t.Errorf("Something went wrong creating a paste: %v", err)
+	}
+
+	pasteCopy := testPaste
+	if err := pasteCopy.Fork(&config); err != nil {
+		t.Errorf("Something went wrong forking a paste: %v", err)
+	}
+	defer pasteCopy.Delete(&config)
+
+	pasteCopy.ID = testPaste.ID
+	// We want to make sure that the new paste is under our account.
+	testPaste.User = config.User
+	pasteCopy.Date = testPaste.Date
+	pasteCopy.URL = testPaste.URL
+	if pasteCopy != testPaste {
+		t.Errorf("Expected %#v, got %#v.", testPaste, pasteCopy)
+	}
+}

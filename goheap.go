@@ -176,3 +176,16 @@ func (paste *Paste) Delete(config *Config) (err error) {
 	}
 	return
 }
+
+// Fork a paste.
+func (paste *Paste) Fork(config *Config) (err error) {
+	data := url.Values{}
+	addAuth(&data, config)
+	data.Add("id", paste.ID)
+	resp, err := http.PostForm(fmt.Sprintf("%v/paste/%v/fork", config.URL, paste.ID), data)
+	if err != nil {
+		return
+	}
+	err = parseBody(resp, paste)
+	return
+}
