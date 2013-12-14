@@ -145,6 +145,9 @@ func (paste *Paste) Get(config *Config) (err error) {
 	return
 }
 
+// Creating and saving are both the same thing as far as goheap
+// is concerned. The only thing that changes is the endpoint to
+// hit.
 func (paste *Paste) createOrSave(endpoint string, config *Config) (err error) {
 	data := url.Values{}
 	addAuth(&data, config)
