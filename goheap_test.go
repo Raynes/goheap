@@ -76,9 +76,10 @@ func gpError(t *testing.T, missing string, missingValue interface{}, expected in
 // environment variables to set refheap url, user, pass, etc.
 func TestGetPaste(t *testing.T) {
 	// Set what the current expression is for error messages.
-	expression = "GetPaste(&config, \"1\")"
+	expression = "paste.GetPaste(&config)"
 	config := devConfig()
-	paste, err := GetPaste(&config, "1")
+	paste := Paste{ID: "1"}
+	err := paste.GetPaste(&config)
 	if err != nil {
 		t.Errorf("%v failed because of error %v", expression, err)
 		return
@@ -128,10 +129,9 @@ func TestGetPaste(t *testing.T) {
 		gpError(t, "Contents", contents, "(begin)")
 	}
 
-	// Set expression for next round of tests.
-	expression = "GetPaste(&config, \"0\")"
 	expectedErr := RefheapError{"Paste does not exist."}
-	paste, err = GetPaste(&config, "@#R##")
+	paste = Paste{ID: "@D("}
+	err = paste.GetPaste(&config)
 	if err != expectedErr {
 		msg := `
 		Expression %v did not fail as expected.
@@ -142,10 +142,6 @@ func TestGetPaste(t *testing.T) {
 	}
 }
 
-func deletePaste(config *Config, paste *Paste) {
-	DeletePaste(config, paste.ID)
-}
-
 // Sadly, TestCreatePaste and TestDeletePaste are rather interleaved, since we
 // can't delete a paste without creating it (and thus TestCreatePaste must
 // pass) and you don't want to create a paste without deleting it after
@@ -154,10 +150,10 @@ func deletePaste(config *Config, paste *Paste) {
 
 func TestCreatePaste(t *testing.T) {
 	config := devConfig()
-	expression = "CreatePaste(&config, Paste{Private: true, Contents: \"hi\", Language: \"Go\"})"
+	expression = "paste.CreatePaste(&config)"
 	paste := Paste{Private: true, Contents: "hi", Language: "Go"}
-	defer deletePaste(&config, &paste)
-	err := CreatePaste(&config, &paste)
+	defer paste.DeletePaste(&config)
+	err := paste.CreatePaste(&config)
 	if err != nil {
 		t.Errorf("Error creating paste with expression %v: %v", expression, err)
 	}

@@ -137,38 +137,38 @@ func addAuth(data *url.Values, config *Config) {
 
 // Get a Paste from refheap. Result will be a Paste or an error
 // if something goes wrong.
-func GetPaste(config *Config, id string) (paste Paste, err error) {
-	resp, err := http.Get(config.URL + "/paste/" + id)
+func (paste *Paste) GetPaste(config *Config) (err error) {
+	resp, err := http.Get(config.URL + "/paste/" + paste.ID)
 	if err == nil {
-		err = parseBody(resp, &paste)
+		err = parseBody(resp, paste)
 	}
 	return
 }
 
 // Create a new paste from a Paste.
-func CreatePaste(config *Config, newP *Paste) (err error) {
+func (paste *Paste) CreatePaste(config *Config) (err error) {
 	data := url.Values{}
 	addAuth(&data, config)
-	if cont := newP.Contents; cont != "" {
+	if cont := paste.Contents; cont != "" {
 		data.Add("contents", cont)
 	}
-	if lang := newP.Language; lang != "" {
+	if lang := paste.Language; lang != "" {
 		data.Add("language", lang)
 	}
-	data.Add("private", strconv.FormatBool(newP.Private))
+	data.Add("private", strconv.FormatBool(paste.Private))
 	resp, err := http.PostForm(config.URL + "/paste", data)
 	if err != nil {
 		return
 	}
-	err = parseBody(resp, newP)
+	err = parseBody(resp, paste)
 	return
 }
 
 // Delete a paste. Requires you to have configured authentication.
-func DeletePaste(config *Config, id string) (err error) {
+func (paste *Paste) DeletePaste(config *Config) (err error) {
 	data := &url.Values{}
 	addAuth(data, config)
-	finalUrl := fmt.Sprintf("%v/paste/%v?%v", config.URL, id, data.Encode())
+	finalUrl := fmt.Sprintf("%v/paste/%v?%v", config.URL, paste.ID, data.Encode())
 	request, _ := http.NewRequest("DELETE", finalUrl, nil)
 	resp, err := http.DefaultClient.Do(request)
 	if resp.StatusCode != 204 {
