@@ -137,7 +137,7 @@ func addAuth(data *url.Values, config *Config) {
 
 // Get a Paste from refheap. Result will be a Paste or an error
 // if something goes wrong.
-func (paste *Paste) GetPaste(config *Config) (err error) {
+func (paste *Paste) Get(config *Config) (err error) {
 	resp, err := http.Get(config.URL + "/paste/" + paste.ID)
 	if err == nil {
 		err = parseBody(resp, paste)
@@ -146,7 +146,7 @@ func (paste *Paste) GetPaste(config *Config) (err error) {
 }
 
 // Create a new paste from a Paste.
-func (paste *Paste) CreatePaste(config *Config) (err error) {
+func (paste *Paste) Create(config *Config) (err error) {
 	data := url.Values{}
 	addAuth(&data, config)
 	if cont := paste.Contents; cont != "" {
@@ -165,7 +165,7 @@ func (paste *Paste) CreatePaste(config *Config) (err error) {
 }
 
 // Delete a paste. Requires you to have configured authentication.
-func (paste *Paste) DeletePaste(config *Config) (err error) {
+func (paste *Paste) Delete(config *Config) (err error) {
 	data := &url.Values{}
 	addAuth(data, config)
 	finalUrl := fmt.Sprintf("%v/paste/%v?%v", config.URL, paste.ID, data.Encode())

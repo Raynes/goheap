@@ -74,12 +74,12 @@ func gpError(t *testing.T, missing string, missingValue interface{}, expected in
 
 // TODO: Allow for test configuration for calls like this with
 // environment variables to set refheap url, user, pass, etc.
-func TestGetPaste(t *testing.T) {
+func TestGet(t *testing.T) {
 	// Set what the current expression is for error messages.
-	expression = "paste.GetPaste(&config)"
+	expression = "paste.Get(&config)"
 	config := devConfig()
 	paste := Paste{ID: "1"}
-	err := paste.GetPaste(&config)
+	err := paste.Get(&config)
 	if err != nil {
 		t.Errorf("%v failed because of error %v", expression, err)
 		return
@@ -131,7 +131,7 @@ func TestGetPaste(t *testing.T) {
 
 	expectedErr := RefheapError{"Paste does not exist."}
 	paste = Paste{ID: "@D("}
-	err = paste.GetPaste(&config)
+	err = paste.Get(&config)
 	if err != expectedErr {
 		msg := `
 		Expression %v did not fail as expected.
@@ -142,18 +142,18 @@ func TestGetPaste(t *testing.T) {
 	}
 }
 
-// Sadly, TestCreatePaste and TestDeletePaste are rather interleaved, since we
-// can't delete a paste without creating it (and thus TestCreatePaste must
+// Sadly, TestCreate and TestDelete are rather interleaved, since we
+// can't delete a paste without creating it (and thus TestCreate must
 // pass) and you don't want to create a paste without deleting it after
 // because nobody likes a litterbug. As such, these tests depend on one
 // another.
 
-func TestCreatePaste(t *testing.T) {
+func TestCreate(t *testing.T) {
 	config := devConfig()
-	expression = "paste.CreatePaste(&config)"
+	expression = "paste.Create(&config)"
 	paste := Paste{Private: true, Contents: "hi", Language: "Go"}
-	defer paste.DeletePaste(&config)
-	err := paste.CreatePaste(&config)
+	defer paste.Delete(&config)
+	err := paste.Create(&config)
 	if err != nil {
 		t.Errorf("Error creating paste with expression %v: %v", expression, err)
 	}
@@ -171,19 +171,19 @@ func TestCreatePaste(t *testing.T) {
 	}
 }
 
-func TestDeletePaste(t *testing.T) {
+func TestDelete(t *testing.T) {
 	config := devConfig()
-	expression = "paste.DeletePaste(&config)"
+	expression = "paste.Delete(&config)"
 	paste := Paste{Contents: "foo", Private: true}
-	if err := paste.CreatePaste(&config); err != nil {
+	if err := paste.Create(&config); err != nil {
 		t.Errorf("Something went wrong creating a paste: %v", err)
 	}
 
-	if err := paste.DeletePaste(&config); err != nil {
+	if err := paste.Delete(&config); err != nil {
 		t.Errorf("Something went wrong deleting a paste: %v", err)
 	}
 
-	err := paste.GetPaste(&config)
+	err := paste.Get(&config)
 	if _, ok := err.(RefheapError); !ok {
 		t.Errorf("Paste %v still exists after trying to delete!", paste.ID)
 	}
