@@ -1,6 +1,21 @@
 package goheap
 
-import "testing"
+import (
+	"testing"
+	"os"
+)
+
+func DevConfig() (config Config) {
+	url   := os.Getenv("RH_URL")
+	user  := os.Getenv("RH_USER")
+	token := os.Getenv("RH_TOKEN")
+	if url == "" {
+		config.Url = RefheapURL
+	}
+	config.User = user
+	config.Key  = token
+	return
+}
 
 func CError(t *testing.T, config *Config, expected interface{}, err *error, call string) {
 	t.Errorf("%v failed! Returned config %#v and err %#v; Wanted %#v",
@@ -62,7 +77,7 @@ func GPError(t *testing.T, missing string, missingValue interface{}, expected in
 func TestGetPaste(t *testing.T) {
 	// Set what the current expression is for error messages.
 	expression = "GetPaste(&config, \"1\")"
-	config, _ := NewConfig()
+	config := DevConfig()
 	paste, err := GetPaste(&config, "1")
 	if err != nil {
 		t.Errorf("%v failed because of error %v", expression, err)
@@ -124,6 +139,39 @@ func TestGetPaste(t *testing.T) {
 		Expected err to be %#v.
 		`
 		t.Errorf(msg, expression, err, expectedErr)
+	}
+}
+
+func deletePaste(config *Config, paste *Paste) {
+	DeletePaste(config, paste.PasteID)
+}
+
+// Sadly, TestCreatePaste and TestDeletePaste are rather interleaved, since we
+// can't delete a paste without creating it (and thus TestCreatePaste must
+// pass) and you don't want to create a paste without deleting it after
+// because nobody likes a litterbug. As such, these tests depend on one
+// another.
+
+func TestCreatePaste(t *testing.T) {
+	config := DevConfig()
+	expression = "CreatePaste(&config, Paste{Private: true, Contents: \"hi\", Language: \"Go\"})"
+	paste := Paste{Private: true, Contents: "hi", Language: "Go"}
+	defer deletePaste(&config, &paste)
+	err := CreatePaste(&config, &paste)
+	if err != nil {
+		t.Errorf("Error creating paste with expression %v: %v", expression, err)
+	}
+
+	if pUser, cUser := paste.User, config.User; pUser != cUser {
+		t.Errorf("Expected creating user to be %v. It was %v.", cUser, pUser)
+	}
+
+	if lang := paste.Language; lang != "Go" {
+		t.Errorf("Expected language to be Go. It was %v.", lang)
+	}
+
+	if priv := paste.Private; !priv {
+		t.Error("Expected paste to be private!")
 	}
 }
 

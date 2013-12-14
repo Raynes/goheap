@@ -2,11 +2,12 @@
 package goheap
 
 import (
-	"fmt"
-	"net/http"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
+	"net/http"
 	"net/url"
+	"strconv"
 )
 
 // Default URL for refheap. This is the official site.
@@ -18,9 +19,9 @@ const RefheapURL = "https://www.refheap.com/api"
 //    User -- The username to authenticate with.
 //    Key  -- The API key to authenticate with.
 type Config struct {
-	Url string
+	Url  string
 	User string
-	Key string
+	Key  string
 }
 
 // If there is an error in the NewConfig function as a result of
@@ -74,15 +75,17 @@ func NewConfig(args ...string) (config Config, err error) {
 //    User     -- User who owns the paste.
 //    Contents -- Contents of the paste.
 type Paste struct {
-	Lines int
-	Views int
-	Date string
-	PasteID string `json:"paste-id"`
-	Language string
-	Private bool
-	Url string
-	User string
-	Contents string
+	// We need to tag these fields to tell the json parser what keys to
+	// look for and produce. Refheap is case sensitive.
+	Lines    int    `json:"lines"`
+	Views    int    `json:"views"`
+	Date     string `json:"date"`
+	PasteID  string `json:"paste-id"`
+	Language string `json:"language"`
+	Private  bool   `json:"private"`
+	Url      string `json:"url"`
+	User     string `json:"user"`
+	Contents string `json:"contents"`
 }
 
 // When Refheap gives us back a json object with an 'error'
@@ -139,6 +142,25 @@ func GetPaste(config *Config, id string) (paste Paste, err error) {
 	if err == nil {
 		err = parseBody(resp, &paste)
 	}
+	return
+}
+
+// Create a new paste from a Paste.
+func CreatePaste(config *Config, newP *Paste) (err error) {
+	data := url.Values{}
+	addAuth(&data, config)
+	if cont := newP.Contents; cont != "" {
+		data.Add("contents", cont)
+	}
+	if lang := newP.Language; lang != "" {
+		data.Add("language", lang)
+	}
+	data.Add("private", strconv.FormatBool(newP.Private))
+	resp, err := http.PostForm(config.Url + "/paste", data)
+	if err != nil {
+		return
+	}
+	err = parseBody(resp, newP)
 	return
 }
 
