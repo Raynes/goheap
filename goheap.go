@@ -165,9 +165,8 @@ func (paste *Paste) createOrSave(endpoint string, config *Config) (err error) {
 
 // Create a new paste from a Paste.
 func (paste *Paste) Create(config *Config) error {
-	return paste.createOrSave(config.URL + "/paste", config)
+	return paste.createOrSave(config.URL+"/paste", config)
 }
-
 
 // Delete a paste. Requires you to have configured authentication.
 func (paste *Paste) Delete(config *Config) (err error) {
@@ -197,5 +196,5 @@ func (paste *Paste) Fork(config *Config) (err error) {
 
 // Edit a paste. Must be authenticated.
 func (paste *Paste) Save(config *Config) (err error) {
-	return paste.createOrSave(config.URL + "/paste/" + paste.ID, config)
+	return paste.createOrSave(config.URL+"/paste/"+paste.ID, config)
 }

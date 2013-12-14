@@ -1,19 +1,19 @@
 package goheap
 
 import (
-	"testing"
 	"os"
+	"testing"
 )
 
 func devConfig() (config Config) {
-	url   := os.Getenv("RH_URL")
-	user  := os.Getenv("RH_USER")
+	url := os.Getenv("RH_URL")
+	user := os.Getenv("RH_USER")
 	token := os.Getenv("RH_TOKEN")
 	if url == "" {
 		config.URL = RefheapURL
 	}
 	config.User = user
-	config.Key  = token
+	config.Key = token
 	return
 }
 
