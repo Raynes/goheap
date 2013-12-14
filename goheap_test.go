@@ -18,8 +18,12 @@ func devConfig() (config Config) {
 }
 
 func cError(t *testing.T, config *Config, expected interface{}, err *error, call string) {
-	t.Errorf("%v failed! Returned config %#v and err %#v; Wanted %#v",
-		call, config, err, expected)
+	msg := `
+	%v failed!
+	Expected %#v.
+	Got err %#v and config %#v
+	`
+	t.Errorf(msg, call, config, err, expected)
 }
 
 // This function is by nature pretty fickle because of the magic
@@ -53,108 +57,80 @@ func TestNewConfig(t *testing.T) {
 	}
 }
 
-// This will be set to whatever the current expression is for
-// gpError() messages. It is a convenience because validating
-// individual paste fields manually is already tedious and
-// passing the current expression each time would be a massive
-// pain in the rear. It pokes at my FP nerves, but these are
-// merely tests after all. We're allowed a bit of leeway. When
-// changing this variable we should always document what we're
-// doing with a comment.
-var expression string
-
 func gpError(t *testing.T, missing string, missingValue interface{}, expected interface{}) {
 	err := `
-		Expression %v failing.
 		Paste field %v was not as expected.
 		Got %#v; Expected %v.
 		`
-	t.Errorf(err, expression, missing, missingValue, expected)
+	t.Errorf(err, missing, missingValue, expected)
 }
 
 func TestGet(t *testing.T) {
-	// Set what the current expression is for error messages.
-	expression = "paste.Get(&config)"
 	config := devConfig()
-	paste := Paste{ID: "1"}
-	err := paste.Get(&config)
-	if err != nil {
-		t.Errorf("%v failed because of error %v", expression, err)
-		return
+	testPaste := Paste{Private: true, Contents: "hi", Language: "Go"}
+	defer testPaste.Delete(&config)
+	if err := testPaste.Create(&config); err != nil {
+		t.Errorf("Something went wrong creating a paste: %v", err)
 	}
 
-	// Unfortunately we cannot just create a dummy object to
-	// compare against because views is dynamic. Technically
-	// all of this is dynamic, but views is the only thing
-	// a person other than me (Raynes) can change. Anyways,
-	// because of this we have to validate each field one by
-	// one manually. At least we get nice failure messages.
+	paste := Paste{ID: testPaste.ID}
+	if err := paste.Get(&config); err != nil {
+		t.Errorf("Something went wrong getting a paste: %v", err)
+	}
+
 	if lines := paste.Lines; lines != 1 {
 		gpError(t, "Lines", lines, 1)
 	}
 
-	if views := paste.Views; views <= 0 {
-		gpError(t, "Views", views, "a number greater than zero")
+	if date := paste.Date; date == "" {
+		gpError(t, "Date", "a date", "no date")
 	}
 
-	const dateValue = "2012-01-04T01:44:22.964Z"
-	if date := paste.Date; date != dateValue {
-		gpError(t, "Date", date, dateValue)
+	if id := paste.ID; id == "" {
+		gpError(t, "ID", "no id", "an id")
 	}
 
-	if ID := paste.ID; ID != "1" {
-		gpError(t, "ID", ID, "1")
+	if language := paste.Language; language != "Go" {
+		gpError(t, "Language", language, "Go")
 	}
 
-	if language := paste.Language; language != "Clojure" {
-		gpError(t, "Language", language, "Clojure")
+	if private := paste.Private; !private {
+		gpError(t, "Private", !private, private)
 	}
 
-	if private := paste.Private; private {
-		gpError(t, "Private", private, !private)
+	if url := paste.URL; url == "" {
+		gpError(t, "Url", url, "no url")
 	}
 
-	const expectedUrl = "https://www.refheap.com/1"
-	if url := paste.URL; url != expectedUrl {
-		gpError(t, "Url", url, expectedUrl)
+	if user := paste.User; user != config.User {
+		gpError(t, "User", user, config.User)
 	}
 
-	if user := paste.User; user != "raynes" {
-		gpError(t, "User", user, "raynes")
-	}
-
-	if contents := paste.Contents; contents != "(begin)" {
-		gpError(t, "Contents", contents, "(begin)")
+	if contents := paste.Contents; contents != "hi" {
+		gpError(t, "Contents", contents, "hi")
 	}
 
 	expectedErr := RefheapError{"Paste does not exist."}
 	paste = Paste{ID: "@D("}
-	err = paste.Get(&config)
+	err := paste.Get(&config)
 	if err != expectedErr {
 		msg := `
-		Expression %v did not fail as expected.
 		err was %#v.
 		Expected err to be %#v.
 		`
-		t.Errorf(msg, expression, err, expectedErr)
+		t.Errorf(msg, err, expectedErr)
 	}
 }
 
-// Sadly, TestCreate and TestDelete are rather interleaved, since we
-// can't delete a paste without creating it (and thus TestCreate must
-// pass) and you don't want to create a paste without deleting it after
-// because nobody likes a litterbug. As such, these tests depend on one
-// another.
-
 func TestCreate(t *testing.T) {
 	config := devConfig()
-	expression = "paste.Create(&config)"
 	paste := Paste{Private: true, Contents: "hi", Language: "Go"}
-	defer paste.Delete(&config)
 	err := paste.Create(&config)
 	if err != nil {
-		t.Errorf("Error creating paste with expression %v: %v", expression, err)
+		t.Errorf("Error creating paste: %v", err)
 	}
+
+	defer paste.Delete(&config)
 
 	if pUser, cUser := paste.User, config.User; pUser != cUser {
 		t.Errorf("Expected creating user to be %v. It was %v.", cUser, pUser)
@@ -171,7 +147,6 @@ func TestCreate(t *testing.T) {
 
 func TestDelete(t *testing.T) {
 	config := devConfig()
-	expression = "paste.Delete(&config)"
 	paste := Paste{Contents: "foo", Private: true}
 	if err := paste.Create(&config); err != nil {
 		t.Errorf("Something went wrong creating a paste: %v", err)
