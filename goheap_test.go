@@ -10,7 +10,7 @@ func devConfig() (config Config) {
 	user  := os.Getenv("RH_USER")
 	token := os.Getenv("RH_TOKEN")
 	if url == "" {
-		config.Url = RefheapURL
+		config.URL = RefheapURL
 	}
 	config.User = user
 	config.Key  = token
@@ -103,8 +103,8 @@ func TestGetPaste(t *testing.T) {
 		gpError(t, "Date", date, dateValue)
 	}
 
-	if pasteID := paste.PasteID; pasteID != "1" {
-		gpError(t, "PasteID", pasteID, "1")
+	if ID := paste.ID; ID != "1" {
+		gpError(t, "ID", ID, "1")
 	}
 
 	if language := paste.Language; language != "Clojure" {
@@ -116,7 +116,7 @@ func TestGetPaste(t *testing.T) {
 	}
 
 	const expectedUrl = "https://www.refheap.com/1"
-	if url := paste.Url; url != expectedUrl {
+	if url := paste.URL; url != expectedUrl {
 		gpError(t, "Url", url, expectedUrl)
 	}
 
@@ -143,7 +143,7 @@ func TestGetPaste(t *testing.T) {
 }
 
 func deletePaste(config *Config, paste *Paste) {
-	DeletePaste(config, paste.PasteID)
+	DeletePaste(config, paste.ID)
 }
 
 // Sadly, TestCreatePaste and TestDeletePaste are rather interleaved, since we

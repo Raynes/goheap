@@ -15,11 +15,11 @@ const RefheapURL = "https://www.refheap.com/api"
 
 // There is a bit of configuration in this client, and this holds it.
 // Fields:
-//    Url  -- The Url to refheap's API.
+//    URL  -- The URL to refheap's API.
 //    User -- The username to authenticate with.
 //    Key  -- The API key to authenticate with.
 type Config struct {
-	Url  string
+	URL  string
 	User string
 	Key  string
 }
@@ -68,10 +68,10 @@ func NewConfig(args ...string) (config Config, err error) {
 //    Lines    -- Number of lines in paste.
 //    Views    -- Number of views paste has.
 //    Date     -- Date that paste was created.
-//    PasteID  -- ID of paste.
+//    ID  -- ID of paste.
 //    Language -- Paste language.
 //    Private  -- Whether or not the paste is private or not.
-//    Url      -- URL to the paste.
+//    URL      -- URL to the paste.
 //    User     -- User who owns the paste.
 //    Contents -- Contents of the paste.
 type Paste struct {
@@ -80,10 +80,10 @@ type Paste struct {
 	Lines    int    `json:"lines"`
 	Views    int    `json:"views"`
 	Date     string `json:"date"`
-	PasteID  string `json:"paste-id"`
+	ID       string `json:"paste-id"`
 	Language string `json:"language"`
 	Private  bool   `json:"private"`
-	Url      string `json:"url"`
+	URL      string `json:"url"`
 	User     string `json:"user"`
 	Contents string `json:"contents"`
 }
@@ -138,7 +138,7 @@ func addAuth(data *url.Values, config *Config) {
 // Get a Paste from refheap. Result will be a Paste or an error
 // if something goes wrong.
 func GetPaste(config *Config, id string) (paste Paste, err error) {
-	resp, err := http.Get(config.Url + "/paste/" + id)
+	resp, err := http.Get(config.URL + "/paste/" + id)
 	if err == nil {
 		err = parseBody(resp, &paste)
 	}
@@ -156,7 +156,7 @@ func CreatePaste(config *Config, newP *Paste) (err error) {
 		data.Add("language", lang)
 	}
 	data.Add("private", strconv.FormatBool(newP.Private))
-	resp, err := http.PostForm(config.Url + "/paste", data)
+	resp, err := http.PostForm(config.URL + "/paste", data)
 	if err != nil {
 		return
 	}
@@ -168,7 +168,7 @@ func CreatePaste(config *Config, newP *Paste) (err error) {
 func DeletePaste(config *Config, id string) (err error) {
 	data := &url.Values{}
 	addAuth(data, config)
-	finalUrl := fmt.Sprintf("%v/paste/%v?%v", config.Url, id, data.Encode())
+	finalUrl := fmt.Sprintf("%v/paste/%v?%v", config.URL, id, data.Encode())
 	request, _ := http.NewRequest("DELETE", finalUrl, nil)
 	resp, err := http.DefaultClient.Do(request)
 	if resp.StatusCode != 204 {
