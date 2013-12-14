@@ -190,3 +190,29 @@ func TestFork(t *testing.T) {
 		t.Errorf("Expected %#v, got %#v.", testPaste, pasteCopy)
 	}
 }
+
+func TestSave(t *testing.T) {
+	config := devConfig()
+	paste := Paste{Private: true, Contents: "hi"}
+
+	if err := paste.Create(&config); err != nil {
+		t.Errorf("Something went wrong creating a paste: %v", err)
+	}
+
+	defer paste.Delete(&config)
+	const newContents = "hi there"
+	paste.Contents = newContents
+	if err := paste.Save(&config); err != nil {
+		t.Errorf("Something went wrong saving a paste: %v", err)
+	}
+
+	newPaste := Paste{ID: paste.ID}
+
+	if err := newPaste.Get(&config); err != nil {
+		t.Errorf("Something went wrong getting a paste %v", err)
+	}
+
+	if contents := newPaste.Contents; contents != "hi there" {
+		t.Errorf("Expected %#v but got %#v.", newContents, contents)
+	}
+}

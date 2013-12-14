@@ -145,8 +145,7 @@ func (paste *Paste) Get(config *Config) (err error) {
 	return
 }
 
-// Create a new paste from a Paste.
-func (paste *Paste) Create(config *Config) (err error) {
+func (paste *Paste) createOrSave(endpoint string, config *Config) (err error) {
 	data := url.Values{}
 	addAuth(&data, config)
 	if cont := paste.Contents; cont != "" {
@@ -156,13 +155,19 @@ func (paste *Paste) Create(config *Config) (err error) {
 		data.Add("language", lang)
 	}
 	data.Add("private", strconv.FormatBool(paste.Private))
-	resp, err := http.PostForm(config.URL + "/paste", data)
+	resp, err := http.PostForm(endpoint, data)
 	if err != nil {
 		return
 	}
 	err = parseBody(resp, paste)
 	return
 }
+
+// Create a new paste from a Paste.
+func (paste *Paste) Create(config *Config) error {
+	return paste.createOrSave(config.URL + "/paste", config)
+}
+
 
 // Delete a paste. Requires you to have configured authentication.
 func (paste *Paste) Delete(config *Config) (err error) {
@@ -188,4 +193,9 @@ func (paste *Paste) Fork(config *Config) (err error) {
 	}
 	err = parseBody(resp, paste)
 	return
+}
+
+// Edit a paste. Must be authenticated.
+func (paste *Paste) Save(config *Config) (err error) {
+	return paste.createOrSave(config.URL + "/paste/" + paste.ID, config)
 }
