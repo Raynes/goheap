@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-func DevConfig() (config Config) {
+func devConfig() (config Config) {
 	url   := os.Getenv("RH_URL")
 	user  := os.Getenv("RH_USER")
 	token := os.Getenv("RH_TOKEN")
@@ -17,7 +17,7 @@ func DevConfig() (config Config) {
 	return
 }
 
-func CError(t *testing.T, config *Config, expected interface{}, err *error, call string) {
+func cError(t *testing.T, config *Config, expected interface{}, err *error, call string) {
 	t.Errorf("%v failed! Returned config %#v and err %#v; Wanted %#v",
 		call, config, err, expected)
 }
@@ -33,28 +33,28 @@ func TestNewConfig(t *testing.T) {
 	error := ConfigError{[]string{"", "", "", ""}}
 
 	if config, err := NewConfig(); err != nil || config != zero {
-		CError(t, &config, &zero, &err, "NewConfig()")
+		cError(t, &config, &zero, &err, "NewConfig()")
 	}
 
 	if config, err := NewConfig("foo"); err != nil || config != one {
-		CError(t, &config, &one, &err, "NewConfig(\"foo\")")
+		cError(t, &config, &one, &err, "NewConfig(\"foo\")")
 	}
 
 	if config, err := NewConfig("raynes", "123"); err != nil || config != two {
-		CError(t, &config, &two, &err, "NewConfig(\"raynes\", \"123\")")
+		cError(t, &config, &two, &err, "NewConfig(\"raynes\", \"123\")")
 	}
 
 	if config, err := NewConfig("foo", "raynes", "123"); err != nil || config != three {
-		CError(t, &config, &three, &err, "NewConfig(\"foo\", \"raynes\", \"123\", )")
+		cError(t, &config, &three, &err, "NewConfig(\"foo\", \"raynes\", \"123\", )")
 	}
 
 	if config, err := NewConfig("", "", "", ""); err == nil {
-		CError(t, &config, &error, &err, "NewConfig(\"\", \"\", \"\", \"\")")
+		cError(t, &config, &error, &err, "NewConfig(\"\", \"\", \"\", \"\")")
 	}
 }
 
 // This will be set to whatever the current expression is for
-// GPError() messages. It is a convenience because validating
+// gpError() messages. It is a convenience because validating
 // individual paste fields manually is already tedious and
 // passing the current expression each time would be a massive
 // pain in the rear. It pokes at my FP nerves, but these are
@@ -63,7 +63,7 @@ func TestNewConfig(t *testing.T) {
 // doing with a comment.
 var expression string
 
-func GPError(t *testing.T, missing string, missingValue interface{}, expected interface{}) {
+func gpError(t *testing.T, missing string, missingValue interface{}, expected interface{}) {
 	err := `
 		Expression %v failing.
 		Paste field %v was not as expected.
@@ -77,7 +77,7 @@ func GPError(t *testing.T, missing string, missingValue interface{}, expected in
 func TestGetPaste(t *testing.T) {
 	// Set what the current expression is for error messages.
 	expression = "GetPaste(&config, \"1\")"
-	config := DevConfig()
+	config := devConfig()
 	paste, err := GetPaste(&config, "1")
 	if err != nil {
 		t.Errorf("%v failed because of error %v", expression, err)
@@ -91,41 +91,41 @@ func TestGetPaste(t *testing.T) {
 	// because of this we have to validate each field one by
 	// one manually. At least we get nice failure messages.
 	if lines := paste.Lines; lines != 1 {
-		GPError(t, "Lines", lines, 1)
+		gpError(t, "Lines", lines, 1)
 	}
 
 	if views := paste.Views; views <= 0 {
-		GPError(t, "Views", views, "a number greater than zero")
+		gpError(t, "Views", views, "a number greater than zero")
 	}
 
 	const dateValue = "2012-01-04T01:44:22.964Z"
 	if date := paste.Date; date != dateValue {
-		GPError(t, "Date", date, dateValue)
+		gpError(t, "Date", date, dateValue)
 	}
 
 	if pasteID := paste.PasteID; pasteID != "1" {
-		GPError(t, "PasteID", pasteID, "1")
+		gpError(t, "PasteID", pasteID, "1")
 	}
 
 	if language := paste.Language; language != "Clojure" {
-		GPError(t, "Language", language, "Clojure")
+		gpError(t, "Language", language, "Clojure")
 	}
 
 	if private := paste.Private; private {
-		GPError(t, "Private", private, !private)
+		gpError(t, "Private", private, !private)
 	}
 
 	const expectedUrl = "https://www.refheap.com/1"
 	if url := paste.Url; url != expectedUrl {
-		GPError(t, "Url", url, expectedUrl)
+		gpError(t, "Url", url, expectedUrl)
 	}
 
 	if user := paste.User; user != "raynes" {
-		GPError(t, "User", user, "raynes")
+		gpError(t, "User", user, "raynes")
 	}
 
 	if contents := paste.Contents; contents != "(begin)" {
-		GPError(t, "Contents", contents, "(begin)")
+		gpError(t, "Contents", contents, "(begin)")
 	}
 
 	// Set expression for next round of tests.
@@ -153,7 +153,7 @@ func deletePaste(config *Config, paste *Paste) {
 // another.
 
 func TestCreatePaste(t *testing.T) {
-	config := DevConfig()
+	config := devConfig()
 	expression = "CreatePaste(&config, Paste{Private: true, Contents: \"hi\", Language: \"Go\"})"
 	paste := Paste{Private: true, Contents: "hi", Language: "Go"}
 	defer deletePaste(&config, &paste)
