@@ -143,7 +143,7 @@ Assume there is a paste on Refheap with id '30000'. Let's see how we'd fetch
 this paste.
 
 ```go
-paste := goheap.Paste{ID: "30000}
+paste := goheap.Paste{ID: "30000"}
 paste.Get(&config)
 ```
 
